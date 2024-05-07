@@ -3,7 +3,8 @@ package motobox.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import motobox.Motobox;
 import motobox.recipe.MechanicTableRecipe;
-import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.resource.language.I18n;
@@ -103,9 +104,9 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
     }
 
     @Override
-    public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
-        super.render(matrices, mouseX, mouseY, delta);
-        this.drawMouseoverTooltip(matrices, mouseX, mouseY);
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+        this.drawMouseoverTooltip(context, mouseX, mouseY);
     }
 
     private void preDraw() {
@@ -115,25 +116,25 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
     }
 
     @Override
-    protected void drawBackground(MatrixStack matrices, float delta, int mouseX, int mouseY) {
-        this.renderBackground(matrices);
+    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
+        this.renderBackground(context);
 
         this.preDraw();
-        this.drawTexture(matrices, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
-        this.drawCategoryBar(matrices, mouseX, mouseY);
-        this.drawRecipes(matrices, mouseX, mouseY);
+        context.drawTexture(TEXTURE, this.x, this.y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+        this.drawCategoryBar(context, mouseX, mouseY);
+        this.drawRecipes(context, mouseX, mouseY);
 
-        this.drawMissingIngredients(matrices);
+        this.drawMissingIngredients(context);
     }
 
     @Override
-    protected void drawForeground(MatrixStack matrices, int mouseX, int mouseY) {
-        this.textRenderer.draw(matrices, this.title, (float)this.titleX, (float)this.titleY, 0xffffffff);
-        this.textRenderer.draw(matrices, this.playerInventoryTitle, (float)this.playerInventoryTitleX, (float)this.playerInventoryTitleY, 4210752);
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        context.drawText(client.textRenderer, this.title, this.titleX, this.titleY, 0xffffffff, false);
+        context.drawText(client.textRenderer, this.playerInventoryTitle, this.playerInventoryTitleX, this.playerInventoryTitleY, 4210752, false);
 
         int hoveredRecipe = this.getHoveredRecipe(mouseX, mouseY);
         if (hoveredRecipe >= 0) {
-            this.renderTooltip(matrices, this.handler.recipes.get(hoveredRecipe).getOutput(), mouseX - this.x, mouseY - this.y);
+            context.drawTooltip(client.textRenderer, this.handler.recipes.get(hoveredRecipe).getOutput(null).getName(), mouseX - this.x, mouseY - this.y);
         }
     }
 
@@ -202,21 +203,23 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
         return false;
     }
 
-    protected final void drawMissingIngredient(MatrixStack matrices, Ingredient ing, int x, int y) {
-        DrawableHelper.fill(matrices, x, y, x + 16, y + 16, 0x45FF0000);
+    protected final void drawMissingIngredient(DrawContext context, Ingredient ing, int x, int y) {
+        context.fill(x, y, x + 16, y + 16, 0x45FF0000);
 
         var stacks = ing.getMatchingStacks();
         ItemStack stack = stacks[MathHelper.floor((float)this.time / 30) % stacks.length];
         stack.setCount(handler.missingIngredients.get(ing));
-        itemRenderer.renderInGuiWithOverrides(stack, x, y);
-        itemRenderer.renderGuiItemOverlay(client.textRenderer, stack, x, y);
+        this.renderWithTooltip(context, x, y, 0f);
+        // TODO almost certainly should not use above line to replace the two lines below
+        //itemRenderer.renderInGuiWithOverrides(stack, x, y);
+        //itemRenderer.renderGuiItemOverlay(client.textRenderer, stack, x, y);
 
         RenderSystem.depthFunc(516);
-        DrawableHelper.fill(matrices, x, y, x + 16, y + 16, 0x30FFFFFF);
+        context.fill(x, y, x + 16, y + 16, 0x30FFFFFF);
         RenderSystem.depthFunc(515);
     }
 
-    protected void drawMissingIngredients(MatrixStack matrices) {
+    protected void drawMissingIngredients(DrawContext context) {
         var inputInv = this.handler.inputInv;
         var missingIngs = new ArrayDeque<>(this.handler.missingIngredients.keySet());
 
@@ -225,7 +228,7 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
             int y = this.y + 88;
 
             if (inputInv.getStack(i).isEmpty()) {
-                this.drawMissingIngredient(matrices, missingIngs.removeFirst(), x, y);
+                this.drawMissingIngredient(context, missingIngs.removeFirst(), x, y);
             }
         }
     }
@@ -279,21 +282,21 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
         return -2;
     }
 
-    protected void drawCategoryBar(MatrixStack matrices, int mouseX, int mouseY) {
+    protected void drawCategoryBar(DrawContext context, int mouseX, int mouseY) {
         int hoveredCatButton = this.getHoveredCategoryButton(mouseX, mouseY);
 
         this.preDraw();
-        this.drawTexture(matrices, this.categoryButtonsX, this.categoryButtonsY,
+        context.drawTexture(TEXTURE, this.categoryButtonsX, this.categoryButtonsY,
                 176, 17 + (hoveredCatButton < 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT);
-        this.drawTexture(matrices, this.categoryButtonsX + (CATEGORY_BUTTON_AREA_WIDTH - CATEGORY_BUTTON_WIDTH), this.categoryButtonsY,
+        context.drawTexture(TEXTURE, this.categoryButtonsX + (CATEGORY_BUTTON_AREA_WIDTH - CATEGORY_BUTTON_WIDTH), this.categoryButtonsY,
                 188, 17 + (hoveredCatButton > 0 ? CATEGORY_BUTTON_HEIGHT : 0), CATEGORY_BUTTON_WIDTH, CATEGORY_BUTTON_HEIGHT);
 
         if (this.categoryTitle != null) {
-            DrawableHelper.drawCenteredTextWithShadow(matrices, this.textRenderer, this.categoryTitle, this.x + 120, this.y + 8, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, this.categoryTitle, this.x + 120, this.y + 8, 0xFFFFFF);
         }
     }
 
-    protected void drawRecipes(MatrixStack matrices, int mouseX, int mouseY) {
+    protected void drawRecipes(DrawContext context, int mouseX, int mouseY) {
         if (this.orderedCategories.size() > 0) {
             var recipes = this.recipes.get(this.orderedCategories.get(this.currentCategory));
 
@@ -315,7 +318,7 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
                             state = RecipeButtonState.HOVERED;
                         }
 
-                        this.drawRecipeEntry(entry, matrices, x, y, state);
+                        this.drawRecipeEntry(entry, context, x, y, state);
                     } else {
                         break;
                     }
@@ -332,15 +335,17 @@ public class MechanicTableScreen extends HandledScreen<MechanicTableScreenHandle
             scrollBarY += (int)((SCROLL_BAR_AREA_HEIGHT - SCROLL_BAR_HEIGHT) * ((float)this.recipeScroll / maxScroll));
         }
 
-        this.drawTexture(matrices, scrollBarX, scrollBarY, 227, 0, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT);
+        context.drawTexture(TEXTURE, scrollBarX, scrollBarY, 227, 0, SCROLL_BAR_WIDTH, SCROLL_BAR_HEIGHT);
     }
 
-    protected void drawRecipeEntry(RecipeEntry entry, MatrixStack matrices, int x, int y, RecipeButtonState state) {
+    protected void drawRecipeEntry(RecipeEntry entry, DrawContext context, int x, int y, RecipeButtonState state) {
         this.preDraw();
-        this.drawTexture(matrices, x, y, 176 + (state.ordinal() * RECIPE_BUTTON_SIZE), 0, RECIPE_BUTTON_SIZE, RECIPE_BUTTON_SIZE);
+        context.drawTexture(TEXTURE, x, y, 176 + (state.ordinal() * RECIPE_BUTTON_SIZE), 0, RECIPE_BUTTON_SIZE, RECIPE_BUTTON_SIZE);
 
-        var stack = entry.recipe.getOutput();
-        this.itemRenderer.renderInGui(stack, x, y);
+        var stack = entry.recipe.getOutput(null);
+        // TODO ensure this is the right way to do this
+        this.renderWithTooltip(context, x, y, 0f);
+        // this.itemRenderer.renderInGui(stack, x, y);
     }
 
     public record RecipeEntry(int id, MechanicTableRecipe recipe) {}

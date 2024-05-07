@@ -4,12 +4,14 @@ import motobox.block.entity.VehicleAssemblerBlockEntity;
 import motobox.util.EntityRenderHelper;
 import motobox.vehicle.render.VehicleRenderer;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.font.TextRenderer.TextLayerType;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.state.property.Properties;
+
 import org.joml.Quaternionf;
 
 public class VehicleAssemblerBlockEntityRenderer implements BlockEntityRenderer<VehicleAssemblerBlockEntity> {
@@ -43,7 +45,7 @@ public class VehicleAssemblerBlockEntityRenderer implements BlockEntityRenderer<
             for (var text : entity.label) {
                 matrices.push();
                 matrices.translate(-0.5 * textRenderer.getWidth(text), 0, 0);
-                textRenderer.drawWithShadow(matrices, text, 0, 0, 0xFFFFFF);
+                textRenderer.draw(text, 0f, 0f, 0xFFFFFF, true, matrices.peek().getPositionMatrix(), vertexConsumers, TextLayerType.NORMAL, 0xFFFFFF, light);
                 matrices.pop();
                 matrices.translate(0, 12, 0);
             }

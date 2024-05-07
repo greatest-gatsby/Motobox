@@ -10,9 +10,7 @@ import motobox.vehicle.render.attachment.rear.CaravanRearAttachmentRenderModel;
 import motobox.vehicle.render.attachment.rear.TrailerRearAttachmentRenderModel;
 import motobox.vehicle.render.engine.MotorbikeEngineModel;
 import motobox.vehicle.render.engine.DieselFourCylinderEngineModel;
-import motobox.vehicle.render.frame.MotorbikeFrameModel;
 import motobox.vehicle.render.frame.RustyCarFrameModel;
-import motobox.vehicle.render.frame.TruckFrameModel;
 import motobox.vehicle.render.wheel.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -56,8 +54,8 @@ public enum MotoboxEntities {
         EntityRendererRegistry.register(UFO, UfoEntityRenderer::new);
         EntityRendererRegistry.register(VEHICLE_ENTITY, VehicleEntityRenderer::new);
 
-        EntityModelLayerRegistry.registerModelLayer(TruckFrameModel.MODEL_LAYER, TruckFrameModel::getTexturedModelData);
-        EntityModelLayerRegistry.registerModelLayer(MotorbikeFrameModel.MODEL_LAYER, MotorbikeFrameModel::getTexturedModelData);
+        //EntityModelLayerRegistry.registerModelLayer(TruckFrameModel.MODEL_LAYER, TruckFrameModel::getTexturedModelData);
+        //EntityModelLayerRegistry.registerModelLayer(MotorbikeFrameModel.MODEL_LAYER, MotorbikeFrameModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(RustyCarFrameModel.MODEL_LAYER, RustyCarFrameModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(TrailerRearAttachmentRenderModel.MODEL_LAYER, TrailerRearAttachmentRenderModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(CaravanRearAttachmentRenderModel.MODEL_LAYER, CaravanRearAttachmentRenderModel::getTexturedModelData);

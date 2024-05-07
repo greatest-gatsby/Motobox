@@ -37,7 +37,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
@@ -319,7 +319,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     @Override
     public void onSpawnPacket(EntitySpawnS2CPacket packet) {
         super.onSpawnPacket(packet);
-        if (world.isClient()) {
+        if (getWorld().isClient()) {
             PayloadPackets.requestSyncVehicleComponentsPacket(this);
         }
     }
@@ -397,7 +397,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     }
 
     public double getEffectiveSpeed() {
-        if (this.getPrimaryPassenger() instanceof PlayerEntity player && player.isMainPlayer()) {
+        if (this.getFirstPassenger() instanceof PlayerEntity player && player.isMainPlayer()) {
             return Math.max(this.addedVelocity.length(), Math.abs(this.hSpeed));
         }
 
@@ -424,7 +424,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     }
 
     private void setDrifting(boolean drifting) {
-        if (this.world.isClient() && !this.drifting && drifting) {
+        if (this.getWorld().isClient() && !this.drifting && drifting) {
             playSkiddingSound();
         }
 
@@ -432,7 +432,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     }
 
     private void setBurningOut(boolean burningOut) {
-        if (this.world.isClient() && !this.drifting && !this.burningOut && burningOut) {
+        if (this.getWorld().isClient() && !this.drifting && !this.burningOut && burningOut) {
             playSkiddingSound();
         }
 
@@ -455,7 +455,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
             this.rearAttachment = rearAttachment.constructor().apply(rearAttachment, this);
             this.rearAttachment.setYaw(this.getYaw());
 
-            if (!world.isClient() && !this.rearAttachment.isRideable() && this.getPassengerList().size() > 1) {
+            if (!getWorld().isClient() && !this.rearAttachment.isRideable() && this.getPassengerList().size() > 1) {
                 this.getPassengerList().get(1).stopRiding();
             }
 
@@ -484,14 +484,14 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         this.wheels = wheel;
         this.engine = engine;
         this.updateModels = true;
-        this.stepHeight = wheels.size();
+        this.setStepHeight(wheels.size());
         this.stats.from(frame, wheel, engine);
         this.displacement.applyWheelbase(frame.model().wheelBase().get());
-        if (!world.isClient()) syncComponents();
+        if (!getWorld().isClient()) syncComponents();
     }
 
     public void forNearbyPlayers(int radius, boolean ignoreDriver, Consumer<ServerPlayerEntity> action) {
-        for (PlayerEntity p : world.getPlayers()) {
+        for (PlayerEntity p : getWorld().getPlayers()) {
             if (ignoreDriver && p == getFirstPassenger()) {
                 continue;
             }
@@ -567,7 +567,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     public void tick() {
         this.ticksUnderwater = this.location == Location.UNDER_WATER || this.location == Location.UNDER_FLOWING_WATER ? (this.ticksUnderwater += 1.0f) : 0.0f;
 
-        if (!this.world.isClient && this.ticksUnderwater >= 60.0f) {
+        if (!this.getWorld().isClient && this.ticksUnderwater >= 60.0f) {
             this.removeAllPassengers();
         }
 
@@ -576,7 +576,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         if (lastWheelAngle != wheelAngle) markDirty();
         lastWheelAngle = wheelAngle;
 
-        if (!this.wasEngineRunning && this.engineRunning() && this.world.isClient()) {
+        if (!this.wasEngineRunning && this.engineRunning() && this.getWorld().isClient()) {
             playEngineSound();
         }
         this.wasEngineRunning = this.engineRunning();
@@ -611,7 +611,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         }
         postMovementTick();
 
-        if (!world.isClient()) {
+        if (!getWorld().isClient()) {
             var prevTailPos = this.prevTailPos != null ? this.prevTailPos : this.getTailPos();
             var tailPos = this.getTailPos();
 
@@ -653,7 +653,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
                 suspensionBounceTimer--;
             }
 
-            if (Math.abs(this.hSpeed) < 0.05 && !this.burningOut && this.getPrimaryPassenger() instanceof PlayerEntity) {
+            if (Math.abs(this.hSpeed) < 0.05 && !this.burningOut && this.getFirstPassenger() instanceof PlayerEntity) {
                 this.standStillTime = AUtils.shift(this.standStillTime, 0.05f, 1f);
             } else {
                 this.standStillTime = AUtils.shift(this.standStillTime, 0.15f, -1.3f);
@@ -751,7 +751,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
             // both slow enough and is at an extreme enough offset angle to incrementally move in reverse
             float mul = 0.5f + (MathHelper.clamp(hSpeed, 0, 1) * 0.5f);
             if (pos.length() < 20 * mul && Math.abs(offset) > 180 - (170 * mul)) {
-                long time = world.getTime();
+                long time = getWorld().getTime();
                 // this is so that the vehicle alternates between reverse and forward,
                 // like a driver would do in order to angle their vehicle toward a target location
                 reverse = (time % 80 <= 30);
@@ -791,11 +791,11 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         }
 
         // Get block below's friction
-        var blockBelow = new BlockPos(getX(), getY() - 0.05, getZ());
-        float grip = 1 - ((MathHelper.clamp((world.getBlockState(blockBelow).getBlock().getSlipperiness() - 0.6f) / 0.4f, 0, 1) * (1 - stats.getGrip() * 0.8f)));
+        var blockBelow = new BlockPos((int)getX(), (int) (getY() - 0.05), (int) getZ());
+        float grip = 1 - ((MathHelper.clamp((getWorld().getBlockState(blockBelow).getBlock().getSlipperiness() - 0.6f) / 0.4f, 0, 1) * (1 - stats.getGrip() * 0.8f)));
 
         // Bounce on gel
-        if (this.vehicleOnGround && this.jumpCooldown <= 0 && world.getBlockState(this.getBlockPos()).getBlock() instanceof LaunchGelBlock) {
+        if (this.vehicleOnGround && this.jumpCooldown <= 0 && getWorld().getBlockState(this.getBlockPos()).getBlock() instanceof LaunchGelBlock) {
             this.setSpeed(Math.max(this.getHSpeed(), 0.1f), Math.max(this.getVSpeed(), 0.9f));
             this.jumpCooldown = 5;
             this.vehicleOnGround = false;
@@ -851,8 +851,8 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
 
         // Allows for the sticky slope effect to continue for a tick after not being on a slope
         // This prevents the vehicle from randomly jumping if it's moving down a slope quickly
-        var below = new BlockPos(Math.floor(getX()), Math.floor(getY() - 0.51), Math.floor(getZ()));
-        var state = world.getBlockState(below);
+        var below = new BlockPos((int) Math.floor(getX()), (int) Math.floor(getY() - 0.51), (int) Math.floor(getZ()));
+        var state = getWorld().getBlockState(below);
         if (state.isIn(Motobox.STICKY_SLOPES)) {
             slopeStickingTimer = 1;
         } else {
@@ -860,8 +860,8 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         }
 
         // Handle being in off-road
-        if (boostSpeed < 0.4f && world.getBlockState(getBlockPos()).getBlock() instanceof OffRoadBlock offRoadBlock) {
-            int layers = world.getBlockState(getBlockPos()).get(OffRoadBlock.LAYERS);
+        if (boostSpeed < 0.4f && getWorld().getBlockState(getBlockPos()).getBlock() instanceof OffRoadBlock offRoadBlock) {
+            int layers = getWorld().getBlockState(getBlockPos()).get(OffRoadBlock.LAYERS);
             float cap = stats.getComfortableSpeed() * (1 - ((float) layers / 3.5f));
             engineSpeed = Math.min(cap, engineSpeed);
             this.debrisColor = offRoadBlock.color;
@@ -915,7 +915,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     public void runOverEntities(Vec3d velocity) {
         var frontBox = getBoundingBox().offset(velocity.multiply(0.5));
         var velAdd = velocity.add(0, 0.1, 0).multiply(3);
-        for (var entity : world.getEntitiesByType(TypeFilter.instanceOf(Entity.class), frontBox, entity -> entity != this && entity != getFirstPassenger())) {
+        for (var entity : getWorld().getEntitiesByType(TypeFilter.instanceOf(Entity.class), frontBox, entity -> entity != this && entity != getFirstPassenger())) {
             if (!entity.isInvulnerable()) {
                 if (entity instanceof LivingEntity living && entity.getVehicle() != this) {
                     living.damage(MotoboxEntities.VEHICLE_DAMAGE_SOURCE, hSpeed * 10);
@@ -943,7 +943,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
             double knockSpeed = ((-0.2 * hSpeed) - 0.5);
             addedVelocity = addedVelocity.add(Math.sin(angle) * knockSpeed, 0, Math.cos(angle) * knockSpeed);
 
-            world.playSound(this.getX(), this.getY(), this.getZ(), MotoboxSounds.COLLISION, SoundCategory.AMBIENT, 0.76f, 0.65f + (0.06f * (this.world.random.nextFloat() - 0.5f)), true);
+            getWorld().playSound(this.getX(), this.getY(), this.getZ(), MotoboxSounds.COLLISION, SoundCategory.AMBIENT, 0.76f, 0.65f + (0.06f * (this.getWorld().random.nextFloat() - 0.5f)), true);
         }
 
         double yDisp = getPos().subtract(this.lastPosForDisplacement).getY();
@@ -1025,7 +1025,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
 //                    }
 //                }
 //            }
-            if (world.isClient()) {
+            if (getWorld().isClient()) {
                 this.prevYaw = prevYaw;
             }
         }
@@ -1033,7 +1033,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
 
     @Override
     public void move(MovementType movementType, Vec3d movement) {
-        if (!this.world.isClient() && movementType == MovementType.PLAYER) {
+        if (!this.getWorld().isClient() && movementType == MovementType.PLAYER) {
             AUtils.IGNORE_ENTITY_GROUND_CHECK_STEPPING = true;
         }
         super.move(movementType, movement);
@@ -1045,14 +1045,14 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     }
 
     public void displacementTick(boolean tick) {
-        if (this.world.isClient()) {
+        if (this.getWorld().isClient()) {
             this.displacement.preTick();
 
             if (tick) {
-                this.displacement.tick(this.world, this, this.getPos(), this.getYaw(), this.stepHeight);
+                this.displacement.tick(this.getWorld(), this, this.getPos(), this.getYaw(), this.getStepHeight());
             }
 
-            if (world.getBlockState(this.getBlockPos()).getBlock() instanceof VehicleAssemblerBlock) {
+            if (getWorld().getBlockState(this.getBlockPos()).getBlock() instanceof VehicleAssemblerBlock) {
                 this.displacement.lastVertical = this.displacement.verticalTarget = (-this.wheels.model().radius() / 16);
             }
         }
@@ -1072,23 +1072,23 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         var wid = (b.getXLength() + b.getZLength()) * 0.5f;
         var floorBox = new Box(b.minX + (wid * 0.94), b.minY - 0.05, b.minZ + (wid * 0.94), b.maxX - (wid * 0.94), b.minY, b.maxZ - (wid * 0.94));
         var wallBox = b.contract(0.05).offset(this.lastVelocity.normalize().multiply(0.12));
-        var start = new BlockPos(b.minX - 0.1, b.minY - 0.2, b.minZ - 0.1);
-        var end = new BlockPos(b.maxX + 0.1, b.maxY + 0.2 + this.stepHeight, b.maxZ + 0.1);
+        var start = new BlockPos((int) (b.minX - 0.1), (int) (b.minY - 0.2), (int) (b.minZ - 0.1));
+        var end = new BlockPos((int) (b.minX + 0.1), (int) (b.minY + 0.2), (int) (b.minZ + 0.1));
         var groundCuboid = VoxelShapes.cuboid(groundBox);
         var floorCuboid = VoxelShapes.cuboid(floorBox);
         var wallCuboid = VoxelShapes.cuboid(wallBox);
-        var stepWallCuboid = wallCuboid.offset(0, this.stepHeight - 0.05, 0);
+        var stepWallCuboid = wallCuboid.offset(0, this.getStepHeight() - 0.05, 0);
         boolean wallHit = false;
         boolean stepWallHit = false;
         var shapeCtx = ShapeContext.of(this);
-        if (this.world.isRegionLoaded(start, end)) {
+        if (this.getWorld().isRegionLoaded(start, end)) {
             var pos = new BlockPos.Mutable();
             for (int x = start.getX(); x <= end.getX(); ++x) {
                 for (int y = start.getY(); y <= end.getY(); ++y) {
                     for (int z = start.getZ(); z <= end.getZ(); ++z) {
                         pos.set(x, y, z);
-                        var state = this.world.getBlockState(pos);
-                        var blockShape = state.getCollisionShape(this.world, pos, shapeCtx).offset(pos.getX(), pos.getY(), pos.getZ());
+                        var state = this.getWorld().getBlockState(pos);
+                        var blockShape = state.getCollisionShape(this.getWorld(), pos, shapeCtx).offset(pos.getX(), pos.getY(), pos.getZ());
                         this.vehicleOnGround = this.vehicleOnGround || VoxelShapes.matchesAnywhere(blockShape, groundCuboid, BooleanBiFunction.AND);
                         this.isFloorDirectlyBelow = this.isFloorDirectlyBelow || VoxelShapes.matchesAnywhere(blockShape, floorCuboid, BooleanBiFunction.AND);
                         wallHit = wallHit || VoxelShapes.matchesAnywhere(blockShape, wallCuboid, BooleanBiFunction.AND);
@@ -1235,7 +1235,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
                         .rotateX((float) Math.toRadians(this.displacement.currAngularX))
                         .rotateZ((float) Math.toRadians(this.displacement.currAngularZ))
                         .rotateY((float) Math.toRadians(-this.getYaw())).multiply(0.0625).add(0, 0.4, 0);
-                world.addParticle(MotoboxParticles.DRIFT_SMOKE, origin.x + pos.x, origin.y + pos.y, origin.z + pos.z, 0, 0, 0);
+                getWorld().addParticle(MotoboxParticles.DRIFT_SMOKE, origin.x + pos.x, origin.y + pos.y, origin.z + pos.z, 0, 0, 0);
             }
         }
     }
@@ -1297,12 +1297,6 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
         return this.rearAttachment.yaw(tickDelta);
     }
 
-    @Nullable
-    @Override
-    public Entity getPrimaryPassenger() {
-        return getFirstPassenger();
-    }
-
     @Override
     protected boolean canAddPassenger(Entity passenger) {
         return this.hasSpaceForPassengers();
@@ -1329,23 +1323,23 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     }
 
     public void playHitSound() {
-        world.emitGameEvent(this, GameEvent.ENTITY_DAMAGE, getPos());
-        world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_COPPER_BREAK, SoundCategory.AMBIENT, 1, 0.9f + (this.world.random.nextFloat() * 0.2f));
+        getWorld().emitGameEvent(this, GameEvent.ENTITY_DAMAGE, getPos());
+        getWorld().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.BLOCK_COPPER_BREAK, SoundCategory.AMBIENT, 1, 0.9f + (this.getWorld().random.nextFloat() * 0.2f));
     }
 
     private void dropParts(Vec3d pos) {
-        world.spawnEntity(new ItemEntity(world, pos.x, pos.y, pos.z, MotoboxItems.VEHICLE_FRAME.createStack(this.getFrame())));
-        world.spawnEntity(new ItemEntity(world, pos.x, pos.y, pos.z, MotoboxItems.VEHICLE_ENGINE.createStack(this.getEngine())));
+        getWorld().spawnEntity(new ItemEntity(getWorld(), pos.x, pos.y, pos.z, MotoboxItems.VEHICLE_FRAME.createStack(this.getFrame())));
+        getWorld().spawnEntity(new ItemEntity(getWorld(), pos.x, pos.y, pos.z, MotoboxItems.VEHICLE_ENGINE.createStack(this.getEngine())));
 
         var wheelStack = MotoboxItems.VEHICLE_WHEEL.createStack(this.getWheels());
         wheelStack.setCount(this.getFrame().model().wheelBase().get().wheelCount);
-        world.spawnEntity(new ItemEntity(world, pos.x, pos.y, pos.z, wheelStack));
+        getWorld().spawnEntity(new ItemEntity(getWorld(), pos.x, pos.y, pos.z, wheelStack));
     }
 
     public void destroyRearAttachment(boolean drop) {
         if (drop) {
             var dropPos = this.rearAttachment.pos();
-            world.spawnEntity(new ItemEntity(world, dropPos.x, dropPos.y, dropPos.z,
+            getWorld().spawnEntity(new ItemEntity(getWorld(), dropPos.x, dropPos.y, dropPos.z,
                     MotoboxItems.REAR_ATTACHMENT.createStack(this.getRearAttachmentType())));
         }
         this.setRearAttachment(RearAttachmentType.EMPTY);
@@ -1354,7 +1348,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     public void destroyFrontAttachment(boolean drop) {
         if (drop) {
             var dropPos = this.frontAttachment.pos();
-            world.spawnEntity(new ItemEntity(world, dropPos.x, dropPos.y, dropPos.z,
+            getWorld().spawnEntity(new ItemEntity(getWorld(), dropPos.x, dropPos.y, dropPos.z,
                     MotoboxItems.FRONT_ATTACHMENT.createStack(this.getFrontAttachmentType())));
         }
         this.setFrontAttachment(FrontAttachmentType.EMPTY);
@@ -1377,7 +1371,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     public ActionResult interact(PlayerEntity player, Hand hand) {
         if (player.isSneaking()) {
             if (this.hasInventory()) {
-                if (!world.isClient()) {
+                if (!getWorld().isClient()) {
                     openInventory(player);
                     return ActionResult.PASS;
                 } else {
@@ -1395,17 +1389,17 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
                 this.destroyFrontAttachment(!player.isCreative());
                 this.playHitSound();
 
-                return ActionResult.success(world.isClient);
+                return ActionResult.success(getWorld().isClient);
             } else if (!this.rearAttachment.type.isEmpty()) {
                 this.destroyRearAttachment(!player.isCreative());
                 this.playHitSound();
 
-                return ActionResult.success(world.isClient);
+                return ActionResult.success(getWorld().isClient);
             } else {
                 this.destroyVehicle(!player.isCreative(), RemovalReason.KILLED);
                 this.playHitSound();
 
-                return ActionResult.success(world.isClient);
+                return ActionResult.success(getWorld().isClient);
             }
         }
 
@@ -1417,17 +1411,17 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
             if (!this.hasSpaceForPassengers()) {
                 final Entity firstPassenger = this.getFirstPassenger();
                 if (!(firstPassenger instanceof PlayerEntity)) {
-                    if (!world.isClient() && firstPassenger != null) {
+                    if (!getWorld().isClient() && firstPassenger != null) {
                         firstPassenger.stopRiding();
                     }
-                    return ActionResult.success(world.isClient);
+                    return ActionResult.success(getWorld().isClient);
                 }
                 return ActionResult.PASS;
             }
-            if (!world.isClient()) {
+            if (!getWorld().isClient()) {
                 player.startRiding(this);
             }
-            return ActionResult.success(world.isClient());
+            return ActionResult.success(getWorld().isClient());
         }
 
         return ActionResult.PASS;
@@ -1447,7 +1441,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
     private float yawVelocity;
 
     @Override
-    public void updatePassengerPosition(Entity passenger) {
+    public void updatePassengerPosition(Entity passenger, PositionUpdater updater) {
         if (!this.hasPassenger(passenger)) {
             return;
         }
@@ -1570,23 +1564,23 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
 
     @Override
     public Vec3d updatePassengerForDismount(LivingEntity passenger) {
-        double e;
         Vec3d vec3d = BoatEntity.getPassengerDismountOffset(this.getWidth() * MathHelper.SQUARE_ROOT_OF_TWO, passenger.getWidth(), passenger.getYaw());
+        double e = this.getZ() + vec3d.z;
         double d = this.getX() + vec3d.x;
-        BlockPos blockPos = new BlockPos(d, this.getBoundingBox().maxY, e = this.getZ() + vec3d.z);
+        BlockPos blockPos = new BlockPos((int) d, (int) this.getBoundingBox().maxY, (int) (this.getZ() + vec3d.z));
         BlockPos blockPos2 = blockPos.down();
         double g;
         ArrayList<Vec3d> list = Lists.newArrayList();
-        double f = this.world.getDismountHeight(blockPos);
+        double f = this.getWorld().getDismountHeight(blockPos);
         if (Dismounting.canDismountInBlock(f)) {
             list.add(new Vec3d(d, (double)blockPos.getY() + f, e));
         }
-        if (Dismounting.canDismountInBlock(g = this.world.getDismountHeight(blockPos2))) {
+        if (Dismounting.canDismountInBlock(g = this.getWorld().getDismountHeight(blockPos2))) {
             list.add(new Vec3d(d, (double)blockPos2.getY() + g, e));
         }
         for (EntityPose entityPose : passenger.getPoses()) {
             for (Vec3d vec3d2 : list) {
-                if (!Dismounting.canPlaceEntityAt(this.world, vec3d2, passenger, entityPose)) continue;
+                if (!Dismounting.canPlaceEntityAt(this.getWorld(), vec3d2, passenger, entityPose)) continue;
                 passenger.setPose(entityPose);
                 return vec3d2;
             }
@@ -1665,7 +1659,7 @@ public class VehicleEntity extends BoatEntity implements RenderableVehicle, Enti
 
     public void bounce() {
         suspensionBounceTimer = 3;
-        world.playSound(this.getX(), this.getY(), this.getZ(), MotoboxSounds.LANDING, SoundCategory.AMBIENT, 1, 1.5f + (0.15f * (this.world.random.nextFloat() - 0.5f)), true);
+        getWorld().playSound(this.getX(), this.getY(), this.getZ(), MotoboxSounds.LANDING, SoundCategory.AMBIENT, 1, 1.5f + (0.15f * (this.getWorld().random.nextFloat() - 0.5f)), true);
     }
 
     @SuppressWarnings("ConstantValue")

@@ -55,7 +55,7 @@ public abstract class AbstractUfoEntity extends Entity implements GeoEntity {
         if (this.isLogicalSideForUpdatingMovement()) {
             this.updateInterpolatedPose();
             this.decayVelocity();
-            if (this.world.isClient) {
+            if (this.getWorld().isClient) {
                 this.applyInput();
             }
             this.move(MovementType.SELF, this.getVelocity());
@@ -63,7 +63,7 @@ public abstract class AbstractUfoEntity extends Entity implements GeoEntity {
             this.setVelocity(Vec3d.ZERO);
 
             // TODO radius
-            List<PlayerEntity> collisions = this.world.getEntitiesByClass(PlayerEntity.class, this.getBoundingBox().withMinY(this.getBoundingBox().maxY - 0.1), entity -> true);
+            List<PlayerEntity> collisions = this.getWorld().getEntitiesByClass(PlayerEntity.class, this.getBoundingBox().withMinY(this.getBoundingBox().maxY - 0.1), entity -> true);
             for (PlayerEntity player : collisions) {
                 player.setPosition(player.getPos().getX(), this.getBoundingBox().getMax(Axis.Y), player.getPos().getZ());
                 player.setVelocity(player.getVelocity().getX(), 0, player.getVelocity().getZ());
@@ -105,7 +105,7 @@ public abstract class AbstractUfoEntity extends Entity implements GeoEntity {
     private void applyInput() {
         if (!this.hasPassengers()) return;
 
-        this.setYaw(-this.getPrimaryPassenger().getHeadYaw());
+        this.setYaw(-this.getFirstPassenger().getHeadYaw());
 
         float fockwardVelocity = 0.0f; // FOrward and baCKward = fockward
         if (UfoInput.pressingForward()) fockwardVelocity += 0.05;
@@ -154,7 +154,7 @@ public abstract class AbstractUfoEntity extends Entity implements GeoEntity {
         if (player.shouldCancelInteraction()) {
             return ActionResult.PASS;
         }
-        if (!this.world.isClient) {
+        if (!this.getWorld().isClient) {
             return player.startRiding(this) ? ActionResult.CONSUME : ActionResult.PASS;
         }
         return ActionResult.SUCCESS;
@@ -176,7 +176,7 @@ public abstract class AbstractUfoEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    public Entity getPrimaryPassenger() {
+    public Entity getFirstPassenger() {
         return this.getFirstPassenger();
     }
 

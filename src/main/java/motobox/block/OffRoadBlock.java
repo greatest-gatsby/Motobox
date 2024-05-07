@@ -4,7 +4,6 @@ import motobox.item.CourseElementItem;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
-import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
@@ -54,11 +53,6 @@ public class OffRoadBlock extends Block implements CourseElementItem {
         if (!canPlaceAt(state, world, pos)) {
             world.breakBlock(pos, true);
         }
-    }
-
-    @Override
-    public PistonBehavior getPistonBehavior(BlockState state) {
-        return PistonBehavior.DESTROY;
     }
 
     @Override

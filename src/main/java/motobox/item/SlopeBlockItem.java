@@ -30,12 +30,12 @@ public class SlopeBlockItem extends BlockItem {
     @Override
     public ItemPlacementContext getPlacementContext(ItemPlacementContext context) {
         var hitPos = context.getHitPos();
-        var pos = new BlockPos(Math.floor(hitPos.x), Math.floor(hitPos.y), Math.floor(hitPos.z));
+        var pos = new BlockPos((int) Math.floor(hitPos.x), (int) Math.floor(hitPos.y), (int) Math.floor(hitPos.z));
         var world = context.getWorld();
         if (world.getBlockState(pos).getBlock() instanceof SlopeBlock) {
             var facing = world.getBlockState(pos).get(Properties.HORIZONTAL_FACING);
             var half = world.getBlockState(pos).get(Properties.BLOCK_HALF);
-            var playerFacing = context.getPlayerFacing();
+            var playerFacing = context.getHorizontalPlayerFacing();
             var vOffset = playerFacing == facing && half == BlockHalf.BOTTOM ? Direction.DOWN : playerFacing == facing.getOpposite() && half == BlockHalf.TOP ? Direction.UP : null;
             var place = pos.offset(playerFacing);
             if (vOffset != null) place = place.offset(vOffset);

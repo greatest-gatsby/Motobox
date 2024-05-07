@@ -6,9 +6,7 @@ import motobox.vehicle.render.attachment.rear.CaravanRearAttachmentRenderModel;
 import motobox.vehicle.render.attachment.rear.TrailerRearAttachmentRenderModel;
 import motobox.vehicle.render.engine.MotorbikeEngineModel;
 import motobox.vehicle.render.engine.DieselFourCylinderEngineModel;
-import motobox.vehicle.render.frame.MotorbikeFrameModel;
 import motobox.vehicle.render.frame.RustyCarFrameModel;
-import motobox.vehicle.render.frame.TruckFrameModel;
 import motobox.vehicle.render.wheel.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -29,8 +27,9 @@ public enum MotoboxModels {
     public static void init() {
         MODELS.put(Motobox.id("empty"), EmptyModel::new);
 
-        MODELS.put(Motobox.id("frame_truck"), TruckFrameModel::new);
-        MODELS.put(Motobox.id("frame_motorbike"), MotorbikeFrameModel::new);
+        // TODO: Implement these
+        //MODELS.put(Motobox.id("frame_truck"), TruckFrameModel::new);
+        //MODELS.put(Motobox.id("frame_motorbike"), MotorbikeFrameModel::new);
         MODELS.put(Motobox.id("frame_rusty_car"), RustyCarFrameModel::new);
 
         MODELS.put(Motobox.id("wheel_sleek_red_offroad"), SleekRedOffroadWheelModel::new);

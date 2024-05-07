@@ -1,6 +1,6 @@
 //file:noinspection GroovyAssignabilityCheck
 plugins {
-	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'fabric-loom' version '1.6-SNAPSHOT'
 	id 'org.jetbrains.kotlin.jvm' version "1.7.10"
 	id 'maven-publish'
 }
@@ -32,6 +32,7 @@ repositories {
 	maven { url "https://storage.googleapis.com/devan-maven/" }
 	maven { url "https://api.modrinth.com/maven" }
 	maven { url "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/" }
+	maven { url "https://ueaj.dev/maven" }
 
 	maven {
 		url "https://cursemaven.com"
@@ -64,7 +65,8 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Geckolib
-	modImplementation "software.bernie.geckolib:geckolib-fabric-1.19.3:4.0.3"
+	modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
+	implementation("com.eliotlash.mclib:mclib:20")
 
 	// Controller Support
 	include modImplementation("dev.lambdaurora:spruceui:${project.spruceui_version}")
@@ -76,7 +78,8 @@ dependencies {
 	}
 
 	// Json't
-	include modImplementation("curse.maven:arrp-463113:${project.arrp_version}")
+	// "I never break backwards compatibility" -- AARP mod author. Famous last words...
+	include modImplementation("net.devtech:arrp:0.8.1")
 
 	// Json entity models
 //	modImplementation "maven.modrinth:jsonem:${project.jsonem_version}"

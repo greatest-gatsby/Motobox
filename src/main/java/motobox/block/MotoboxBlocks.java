@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.client.color.world.BiomeColors;
 import net.minecraft.client.color.world.GrassColors;
 import net.minecraft.client.render.RenderLayer;
@@ -43,12 +44,12 @@ public enum MotoboxBlocks {
     public static final Block ALLOW = register("allow", new Block(FabricBlockSettings.copyOf(Blocks.BARRIER).sounds(BlockSoundGroup.METAL)),
             b -> new TooltipBlockItem(b, Text.translatable("tooltip.block.motobox.allow").formatted(Formatting.AQUA), new Item.Settings()));
 
-    public static final Block GRASS_OFF_ROAD = register("grass_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.GRASS_BLOCK).noCollision(), new Color(0x406918)), MotoboxBlocks::simpleItem);
-    public static final Block DIRT_OFF_ROAD = register("dirt_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.DIRT).noCollision(), new Color(0x594227)), MotoboxBlocks::simpleItem);
-    public static final Block SAND_OFF_ROAD = register("sand_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.SAND).noCollision(), new Color(0xC2B185)), MotoboxBlocks::simpleItem);
-    public static final Block SNOW_OFF_ROAD = register("snow_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.SNOW_BLOCK).noCollision(), new Color(0xD0E7ED)), MotoboxBlocks::simpleItem);
+    public static final Block GRASS_OFF_ROAD = register("grass_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.GRASS_BLOCK).noCollision().pistonBehavior(PistonBehavior.DESTROY), new Color(0x406918)), MotoboxBlocks::simpleItem);
+    public static final Block DIRT_OFF_ROAD = register("dirt_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.DIRT).noCollision().pistonBehavior(PistonBehavior.DESTROY), new Color(0x594227)), MotoboxBlocks::simpleItem);
+    public static final Block SAND_OFF_ROAD = register("sand_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.SAND).noCollision().pistonBehavior(PistonBehavior.DESTROY), new Color(0xC2B185)), MotoboxBlocks::simpleItem);
+    public static final Block SNOW_OFF_ROAD = register("snow_off_road", new OffRoadBlock(FabricBlockSettings.copyOf(Blocks.SNOW_BLOCK).noCollision().pistonBehavior(PistonBehavior.DESTROY), new Color(0xD0E7ED)), MotoboxBlocks::simpleItem);
 
-    public static final Block ASPHALT = register("asphalt", new AsphaltBlock(FabricBlockSettings.of(Material.STONE, MapColor.BLACK).requiresTool().strength(1.5f, 6.0f)), MotoboxBlocks::simpleItem);
+    public static final Block ASPHALT = register("asphalt", new AsphaltBlock(FabricBlockSettings.create().mapColor(MapColor.BLACK).requiresTool().strength(1.5f, 6.0f)), MotoboxBlocks::simpleItem);
     public static final Block TRAFFIC_CONE = register("traffic_cone", new TrafficConeBlock(FabricBlockSettings.copyOf(Blocks.STONE).strength(0.5f, 2.0f)), MotoboxBlocks::simpleItem);
     public static final Block ROADBLOCK = register("roadblock", new RoadblockBlock(FabricBlockSettings.copyOf(Blocks.GRAY_CONCRETE).requiresTool().strength(2.0f, 6.0f)), MotoboxBlocks::simpleItem);
 
