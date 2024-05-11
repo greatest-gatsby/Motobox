@@ -87,7 +87,7 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-language-kotlin:1.8.6+kotlin.1.7.21")
 
-	modImplementation "com.terraformersmc:modmenu:5.0.2", {
+	modImplementation "com.terraformersmc:modmenu:7.2.2", {
 		exclude module: "fabric-api"
 	}
 
