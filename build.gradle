@@ -3,6 +3,7 @@ plugins {
 	id 'fabric-loom' version '1.5-SNAPSHOT'
 	id 'org.jetbrains.kotlin.jvm' version "1.9.22"
 	id 'maven-publish'
+	id 'eclipse'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -100,6 +101,20 @@ tasks.withType(JavaCompile).configureEach {
 
 	// Minecraft 1.18 upwards uses Java 17.
 	it.options.release = 17
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+	kotlinOptions.jvmTarget = "17"
+}
+
+eclipse {
+	synchronizationTasks tasks.named('compileKotlin')
+	classpath.plusConfigurations += [configurations.create('kotlinIdeClasspath')]
+}
+
+dependencies {
+	// Expose Kotlin bytecode through the IDE dependency model, not just the generated .classpath.
+	kotlinIdeClasspath files(tasks.named('compileKotlin').flatMap { it.destinationDirectory })
 }
 
 java {

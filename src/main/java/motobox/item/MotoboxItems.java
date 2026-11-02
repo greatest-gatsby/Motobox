@@ -15,11 +15,10 @@ import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.render.entity.EntityRendererFactory;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,6 +72,9 @@ public enum MotoboxItems {
                 float scale = 1;
                 scale /= wheelDist * 0.77f;
                 matrices.push();
+                if (mode == ModelTransformationMode.GUI) {
+                    matrices.translate(0.5, 0, 0.5);
+                }
                 matrices.scale(scale, scale, scale);
                 VehicleRenderer.render(matrices, vertexConsumers, light, overlay, MinecraftClient.getInstance().getTickDelta(), cachedCtx, itemVehicle);
                 matrices.pop();
